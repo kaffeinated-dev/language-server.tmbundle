@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>contactName</key>
+	<string>Abdullah Esmail</string>
+	<key>description</key>
+	<string>Commands that ask the &lt;a href="https://microsoft.github.io/language-server-protocol/"&gt;language server&lt;/a&gt; of a document about its code: completions, documentation, definitions, references, symbols, quick fixes, and renaming, for any language whose bundle starts a language server.</string>
+	<key>mainMenu</key>
+	<dict>
+		<key>items</key>
+		<array>
+			<string>7EE45B53-1AF4-4548-94D1-C8140140235A</string>
+			<string>13135A76-0B42-4A27-9C66-1E7DD7173B9A</string>
+			<string>------------------------------------</string>
+			<string>2ED8298F-47AE-49E9-BFE9-F04F6BD34FBB</string>
+			<string>85CD4BC5-804A-427D-ACCB-9095DAC69EDF</string>
+			<string>213D53CF-D69E-4100-B710-7C364A65CFEE</string>
+			<string>------------------------------------</string>
+			<string>753CD9D7-8848-4940-8666-3A773E32521E</string>
+			<string>1C9887E8-1B0D-45F5-B38C-A1693EB3C004</string>
+		</array>
+	</dict>
+	<key>name</key>
+	<string>Language Server</string>
+	<key>uuid</key>
+	<string>2B7B90FA-78B7-4922-98C7-C025E4F932B4</string>
+</dict>
+</plist>
