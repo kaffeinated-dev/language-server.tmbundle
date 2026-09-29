@@ -282,6 +282,9 @@ class FormatTest < CommandTest
 
     respond('textDocument/formatting', '{"error":{"code":-32601,"message":"There is no language server for this document."}}')
     assert_equal({ status: 2, output: '', errors: "There is no language server for this document.\n" }, run_command('Support/bin/format'))
+
+    respond('textDocument/formatting', '{"error":{"code":-32002,"message":"The language server of this document is starting."}}')
+    assert_equal({ status: 2, output: '', errors: "The language server of this document is starting.\n" }, run_command('Support/bin/format'))
   end
 
   def test_errors_are_shown_in_a_tool_tip

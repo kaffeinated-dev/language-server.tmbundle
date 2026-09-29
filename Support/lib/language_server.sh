@@ -234,8 +234,9 @@ language_server_apply () { # params
 # document (in place, so they can be undone), with the tab size and soft tabs
 # of the document as options. Returns 0 when the document changed, 1 when
 # there was nothing to change, and 2 (with the reason on standard error) when
-# the document has no language server, or one that does not format
-# documents. Exits, showing why in a tool tip, when it could not be formatted.
+# the document has no language server, or one that does not format documents
+# (or is starting). Exits, showing why in a tool tip, when it could not be
+# formatted.
 language_server_format () {
 	local options response output
 	options=$(printf '{"options":{"tabSize":%d,"insertSpaces":%s}}' "${TM_TAB_SIZE:-4}" "$([[ "${TM_SOFT_TABS:-}" == YES ]] && echo true || echo false)")

@@ -49,7 +49,8 @@
 //     osascript -l JavaScript language_server.js formatting PATH
 //         What formatting the document (the file PATH) takes: “edit” and the
 //         params of workspace/applyEdit for the edits, “none” without any, or
-//         “unsupported” and why, when its server does not format documents.
+//         “unsupported” and why, when it has no server that formats documents
+//         (or its server is starting).
 //
 // An error response is an error, with the server’s message.
 
@@ -314,7 +315,7 @@ function page(html) {
 }
 
 function formatting(response, path) {
-	if (response.error && response.error.code === -32601) // Not a method of the server, or no server
+	if (response.error && (response.error.code === -32601 || response.error.code === -32002)) // Not a method of the server, no server, or one starting
 		return 'unsupported\n' + (/^method not found/i.test(response.error.message) ? 'The language server of this document does not format documents.' : response.error.message.split('\n')[0]);
 	if (response.error)
 		throw new Error(response.error.message.split('\n')[0]);

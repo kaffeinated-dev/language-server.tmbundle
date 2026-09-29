@@ -4,7 +4,7 @@
 # server’s edits are applied to the document, in place, so they can be undone.
 # Exits 0 when the document changed, 1 when there was nothing to change, and 2
 # when the document has no language server, or one that does not format
-# documents; with another status when it could not be formatted. The reason
-# is on standard error.
+# documents (or is starting); with another status when it could not be
+# formatted. The reason is on standard error.
 . "$(dirname "${BASH_SOURCE[0]}")/../lib/language_server.sh"
 language_server_format
