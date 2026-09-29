@@ -1,0 +1,8 @@
+#!/bin/bash
+# Prints the completions of the document’s language server for the word at the
+# caret as suggestions for "$DIALOG" popup (a property list), for commands of
+# other bundles that add them to their own (require this bundle to get
+# TM_LANGUAGE_SERVER_BUNDLE_SUPPORT). Prints nothing without completions, and
+# fails with the reason on standard error without a language server.
+. "$(dirname "${BASH_SOURCE[0]}")/../lib/language_server.sh"
+language_server_completions

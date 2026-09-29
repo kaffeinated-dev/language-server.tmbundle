@@ -1,0 +1,21 @@
+name: Test
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    # The commands convert the language server’s answers with osascript.
+    runs-on: macos-latest
+
+    steps:
+    - uses: actions/checkout@v7
+    - name: Test the commands
+      run: /usr/bin/ruby -Itest test/commands_test.rb
