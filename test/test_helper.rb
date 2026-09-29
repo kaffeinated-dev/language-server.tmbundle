@@ -55,13 +55,14 @@ class CommandTest < Minitest::Test
     { uri: uri(file), range: { start: { line: line, character: character }, end: { line: line, character: character + 5 } } }
   end
 
-  # Runs the command named NAME in FILE, with the caret on LINE (from 1) at
-  # INDEX (bytes from 0). Returns its status, output, and errors.
+  # Runs the command named NAME (or the script of the bundle NAME, such as
+  # Support/bin/format) in FILE, with the caret on LINE (from 1) at INDEX
+  # (bytes from 0). Returns its status, output, and errors.
   def run_command(name, file: 'lib/sample.rb', line: 1, index: 0, word: nil, env: {})
     fakes = write_fakes
     path = File.join(@project, file)
     current_line = File.readlines(path)[line - 1].to_s.chomp
-    command = plist(File.join(BUNDLE, 'Commands', "#{name}.tmCommand"))['command']
+    program = name.start_with?('Support/') ? [File.join(BUNDLE, name)] : ['-c', plist(File.join(BUNDLE, 'Commands', "#{name}.tmCommand"))['command']]
 
     environment = {
       'PATH' => '/usr/bin:/bin:/usr/sbin:/sbin',
@@ -80,7 +81,7 @@ class CommandTest < Minitest::Test
       'TM_CURRENT_WORD' => word || current_word(current_line, index),
     }.merge(env)
 
-    output, errors, status = Open3.capture3(environment, '/bin/bash', '-c', command, unsetenv_others: true)
+    output, errors, status = Open3.capture3(environment, '/bin/bash', *program, unsetenv_others: true)
     { status: status.exitstatus, output: output, errors: errors }
   end
 

@@ -145,6 +145,16 @@ class QuickFixTest < CommandTest
     assert_equal 'No quick fixes for this line.', run_command('Quick Fix')[:errors]
   end
 
+  def test_its_temporary_folder_is_removed
+    tmp = File.join(@dir, 'tmp')
+    FileUtils.mkdir_p(tmp)
+    respond('textDocument/codeAction', [{ kind: 'quickfix', title: 'Prefix with _', edit: edit }])
+    respond('workspace/applyEdit', applied: true)
+
+    assert_equal 200, run_command('Quick Fix', line: 3, env: { 'TMPDIR' => tmp })[:status]
+    assert_empty Dir.children(tmp)
+  end
+
   def test_a_command_is_run_by_the_server
     respond('textDocument/codeAction', [{ title: 'Toggle block style', command: 'rubyLsp.toggleBlock', arguments: [1] }])
     respond('workspace/executeCommand', nil)
@@ -236,6 +246,54 @@ class RenameTest < CommandTest
     respond('textDocument/prepareRename', { defaultBehavior: true })
     assert_equal 200, run_command('Rename Symbol', line: 2, index: 10, word: 'Greeter')[:status]
     refute_includes mate_log, 'textDocument/rename'
+  end
+end
+
+class FormatTest < CommandTest
+  # Edits as ruby-lsp formats: the whole document replaced.
+  def edits
+    [{ range: { start: { line: 0, character: 0 }, end: { line: 9, character: 0 } }, newText: SAMPLE.sub('"you"', "'you'") }]
+  end
+
+  def test_the_servers_edits_are_applied
+    respond('textDocument/formatting', edits)
+    respond('workspace/applyEdit', applied: true)
+
+    result = run_command('Support/bin/format', env: { 'TM_TAB_SIZE' => '2', 'TM_SOFT_TABS' => 'YES' })
+    assert_equal({ status: 0, output: '', errors: '' }, result)
+    assert_includes mate_log, "--lsp\ntextDocument/formatting\n--lsp-params\n{\"options\":{\"tabSize\":2,\"insertSpaces\":true}}\n"
+    assert_includes mate_log, "--lsp\nworkspace/applyEdit\n"
+    assert_includes mate_log, "--lsp-params\n#{JSON.generate(label: 'Format Document', edit: { changes: { uri('lib/sample.rb') => edits } })}\n"
+  end
+
+  def test_nothing_is_applied_without_edits
+    respond('textDocument/formatting', nil)
+    assert_equal({ status: 1, output: '', errors: '' }, run_command('Support/bin/format', env: { 'TM_TAB_SIZE' => '4', 'TM_SOFT_TABS' => 'NO' }))
+    assert_includes mate_log, '{"options":{"tabSize":4,"insertSpaces":false}}'
+
+    respond('textDocument/formatting', [])
+    assert_equal 1, run_command('Support/bin/format')[:status]
+    refute_includes mate_log, 'workspace/applyEdit'
+  end
+
+  def test_servers_that_do_not_format
+    respond('textDocument/formatting', '{"error":{"code":-32601,"message":"Method not found: textDocument/formatting"}}')
+    assert_equal({ status: 2, output: '', errors: "The language server of this document does not format documents.\n" }, run_command('Support/bin/format'))
+
+    respond('textDocument/formatting', '{"error":{"code":-32601,"message":"There is no language server for this document."}}')
+    assert_equal({ status: 2, output: '', errors: "There is no language server for this document.\n" }, run_command('Support/bin/format'))
+
+    respond('textDocument/formatting', '{"error":{"code":-32002,"message":"The language server of this document is starting."}}')
+    assert_equal({ status: 2, output: '', errors: "The language server of this document is starting.\n" }, run_command('Support/bin/format'))
+  end
+
+  def test_errors_are_shown_in_a_tool_tip
+    respond('textDocument/formatting', '{"error":{"code":-32603,"message":"Formatting failed\\nin RuboCop"}}')
+    assert_equal({ status: 206, output: '', errors: 'Formatting failed' }, run_command('Support/bin/format'))
+
+    respond('textDocument/formatting', edits)
+    respond('workspace/applyEdit', applied: false, failureReason: 'sample.rb changed on disk.')
+    assert_equal({ status: 206, output: '', errors: 'sample.rb changed on disk.' }, run_command('Support/bin/format'))
   end
 end
 

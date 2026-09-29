@@ -29,9 +29,10 @@ language_server_position () { # [symbol]
 }
 
 # Send a request about the document to its language server and print the
-# response (JSON).
+# response (JSON). The position is the caret’s, unless given (or none).
 language_server_request () { # method, [params (JSON)], [position]
-	local args=(--lsp "$1" --line "${3:-$(language_server_position)}")
+	local args=(--lsp "$1") position=${3:-$(language_server_position)}
+	[[ "$position" != none ]] && args+=(--line "$position")
 	[[ -n "${2:-}" ]] && args+=(--lsp-params "$2")
 	"$TM_MATE" "${args[@]}" 2>&1 ||
 		language_server_exit_tool_tip "This needs TextMate 2.0.23+kaffeinated.6 or later, with the language server client."
@@ -176,7 +177,7 @@ language_server_utf16_length () { # bytes
 language_server_quick_fix () {
 	local tmp range params="" what=line items choice kind command
 	tmp=$(mktemp -d "${TMPDIR:-/tmp}/textmate-language-server.XXXXXX") || exit 1
-	trap 'rm -rf "$tmp"' EXIT
+	trap "rm -rf $(printf '%q' "$tmp")" EXIT # Expanded now, as traps run once locals are gone
 
 	range=$(language_server_selection_range) && params="{\"range\":$range}" what=selection
 	language_server_request textDocument/codeAction "$params" > "$tmp/actions" || exit
@@ -227,6 +228,25 @@ language_server_apply () { # params
 	local result
 	result=$(language_server_request workspace/applyEdit "$1") || exit
 	printf '%s' "$result" | language_server_convert applied > /dev/null || exit
+}
+
+# Format the document with its language server: its edits are applied to the
+# document (in place, so they can be undone), with the tab size and soft tabs
+# of the document as options. Returns 0 when the document changed, 1 when
+# there was nothing to change, and 2 (with the reason on standard error) when
+# the document has no language server, or one that does not format documents
+# (or is starting). Exits, showing why in a tool tip, when it could not be
+# formatted.
+language_server_format () {
+	local options response output
+	options=$(printf '{"options":{"tabSize":%d,"insertSpaces":%s}}' "${TM_TAB_SIZE:-4}" "$([[ "${TM_SOFT_TABS:-}" == YES ]] && echo true || echo false)")
+	response=$(language_server_request textDocument/formatting "$options" none) || exit
+	output=$(printf '%s' "$response" | language_server_convert formatting "${TM_FILEPATH:-}") || exit
+	case "${output%%$'\n'*}" in
+		edit)        language_server_apply "${output#*$'\n'}"; return 0 ;;
+		unsupported) printf '%s\n' "${output#*$'\n'}" >&2; return 2 ;;
+		*)           return 1 ;;
+	esac
 }
 
 # Find symbols of the project by name (the language server’s workspace/symbol)

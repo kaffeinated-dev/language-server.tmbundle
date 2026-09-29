@@ -46,6 +46,12 @@
 //         Symbols (of workspace/symbol) as items for "$DIALOG" menu, whose value
 //         is LINE:COLUMN, a tab, and the file.
 //
+//     osascript -l JavaScript language_server.js formatting PATH
+//         What formatting the document (the file PATH) takes: “edit” and the
+//         params of workspace/applyEdit for the edits, “none” without any, or
+//         “unsupported” and why, when it has no server that formats documents
+//         (or its server is starting).
+//
 // An error response is an error, with the server’s message.
 
 ObjC.import('Foundation');
@@ -53,6 +59,8 @@ ObjC.import('Foundation');
 function run(argv) {
 	const input = $.NSString.alloc.initWithDataEncoding($.NSFileHandle.fileHandleWithStandardInput.readDataToEndOfFile, $.NSUTF8StringEncoding).js;
 	const response = JSON.parse(input);
+	if (argv[0] === 'formatting')
+		return formatting(response, argv[1]);
 	if (response.error && argv[0] === 'placeholder') // Servers without prepareRename
 		return argv[2];
 	if (response.error && response.error.code === -32601 && /^method not found/i.test(response.error.message))
@@ -304,6 +312,20 @@ function page(html) {
 	return '<style>body { font: 12px -apple-system, sans-serif; max-width: 42em; } p { margin: .4em 0; } ' +
 		'pre, code { font: 11px ui-monospace, Menlo, monospace; } pre { margin: .4em 0; white-space: pre-wrap; } .more { color: gray; }</style>' +
 		html.join('');
+}
+
+function formatting(response, path) {
+	if (response.error && (response.error.code === -32601 || response.error.code === -32002)) // Not a method of the server, no server, or one starting
+		return 'unsupported\n' + (/^method not found/i.test(response.error.message) ? 'The language server of this document does not format documents.' : response.error.message.split('\n')[0]);
+	if (response.error)
+		throw new Error(response.error.message.split('\n')[0]);
+	const edits = (response.result || []).filter(edit => edit && edit.range && typeof edit.newText === 'string');
+	if (edits.length === 0)
+		return 'none';
+	if (!path)
+		throw new Error('The document is not saved.');
+	const uri = $.NSURL.fileURLWithPath(path).absoluteString.js;
+	return 'edit\n' + JSON.stringify({ label: 'Format Document', edit: { changes: { [uri]: edits } } });
 }
 
 function applied(result) {

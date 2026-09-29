@@ -42,7 +42,13 @@ A command of another bundle can add the completions of the language server to it
 
 	"$TM_LANGUAGE_SERVER_BUNDLE_SUPPORT/bin/completions"
 
-which prints them as suggestions for `"$DIALOG" popup` (a property list), or nothing. `Support/lib/language_server.sh` has the functions the commands use.
+which prints them as suggestions for `"$DIALOG" popup` (a property list), or nothing. A command can format the document with its language server the same way:
+
+	"$TM_LANGUAGE_SERVER_BUNDLE_SUPPORT/bin/format"
+
+applies the server’s edits to the document, in place, so they can be undone. It exits 0 when the document changed, 1 when there was nothing to change, and 2 when the document has no language server, or one that does not format documents or is still starting (so the command can format it another way, or not when saving); with another status when it could not be formatted. The reason is on standard error. With TextMate 2.0.23+kaffeinated.8 or later, only the lines that change are replaced, so the caret and bookmarks stay where they are. The Ruby bundle formats with RuboCop this way, through ruby-lsp.
+
+`Support/lib/language_server.sh` has the functions the commands use.
 
 # Tests
 
