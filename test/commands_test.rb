@@ -56,7 +56,7 @@ class CompleteTest < CommandTest
     script = File.join(BUNDLE, 'Support/bin/completions')
     run_command('Complete', line: 9, index: 16) # For the fakes
 
-    output, status = Open3.capture2e({ 'TM_BUNDLE_SUPPORT' => '/elsewhere', 'TM_MATE' => File.join(@dir, 'fakes/mate'), 'TM_LINE_NUMBER' => '9', 'TM_LINE_INDEX' => '16', 'TM_CURRENT_LINE' => 'puts Sample::Gre' }, script)
+    output, status = Open3.capture2e({ 'TM_BUNDLE_SUPPORT' => '/elsewhere', 'TM_MATE' => File.join(@dir, 'fakes/mate'), 'TM_LINE_NUMBER' => '9', 'TM_LINE_INDEX' => '16', 'TM_CURRENT_LINE' => 'puts Sample::Gre' }, '/bin/bash', script)
     assert status.success?, output
     assert_match(/\A<\?xml.*<string>Greeter<\/string>/m, output)
   end
