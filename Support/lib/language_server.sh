@@ -177,7 +177,7 @@ language_server_utf16_length () { # bytes
 language_server_quick_fix () {
 	local tmp range params="" what=line items choice kind command
 	tmp=$(mktemp -d "${TMPDIR:-/tmp}/textmate-language-server.XXXXXX") || exit 1
-	trap 'rm -rf "$tmp"' EXIT
+	trap "rm -rf $(printf '%q' "$tmp")" EXIT # Expanded now, as traps run once locals are gone
 
 	range=$(language_server_selection_range) && params="{\"range\":$range}" what=selection
 	language_server_request textDocument/codeAction "$params" > "$tmp/actions" || exit

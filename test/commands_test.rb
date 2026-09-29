@@ -145,6 +145,16 @@ class QuickFixTest < CommandTest
     assert_equal 'No quick fixes for this line.', run_command('Quick Fix')[:errors]
   end
 
+  def test_its_temporary_folder_is_removed
+    tmp = File.join(@dir, 'tmp')
+    FileUtils.mkdir_p(tmp)
+    respond('textDocument/codeAction', [{ kind: 'quickfix', title: 'Prefix with _', edit: edit }])
+    respond('workspace/applyEdit', applied: true)
+
+    assert_equal 200, run_command('Quick Fix', line: 3, env: { 'TMPDIR' => tmp })[:status]
+    assert_empty Dir.children(tmp)
+  end
+
   def test_a_command_is_run_by_the_server
     respond('textDocument/codeAction', [{ title: 'Toggle block style', command: 'rubyLsp.toggleBlock', arguments: [1] }])
     respond('workspace/executeCommand', nil)
